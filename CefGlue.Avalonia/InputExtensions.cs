@@ -1,7 +1,9 @@
 using System;
 using System.IO;
+using System.Linq;
 using Avalonia;
 using Avalonia.Input;
+using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 
 namespace Xilium.CefGlue.Avalonia
@@ -211,22 +213,27 @@ namespace Xilium.CefGlue.Avalonia
         public static CefDragData GetDragData(this DragEventArgs e)
         {
             var dragData = CefDragData.Create();
+            var dataTransfer = e.DataTransfer;
 
             // Files
-            if (e.Data.Contains(DataFormats.FileNames))
+            var fileFormat = DataFormat.File;
+            foreach (var item in dataTransfer.Items)
             {
-                var files = (string[])e.Data.GetFileNames();
-                foreach (var filePath in files)
+                if (item.TryGetRaw(fileFormat) is IStorageItem storage)
                 {
-                    var displayName = Path.GetFileName(filePath);
+                    var filePath = storage.Path.LocalPath;
+                    var displayName = storage.Name;
                     dragData.AddFile(filePath.Replace("\\", "/"), displayName);
                 }
             }
 
             // Text
-            if (e.Data.Contains(DataFormats.Text))
+            var text = dataTransfer.Items
+                .Select(item => item.TryGetRaw(DataFormat.Text) as string)
+                .FirstOrDefault(value => value != null);
+            if (text != null)
             {
-                dragData.SetFragmentText(e.Data.GetText());
+                dragData.SetFragmentText(text);
             }
 
             return dragData;

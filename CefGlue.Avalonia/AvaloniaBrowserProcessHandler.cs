@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reactive.Linq;
 using System.Threading;
-using ReactiveUI.Avalonia;
+using Avalonia.Threading;
 using Xilium.CefGlue.Common.Handlers;
 
 namespace Xilium.CefGlue.Avalonia
@@ -22,9 +22,9 @@ namespace Xilium.CefGlue.Avalonia
                     delayMs = 1;
                 }
 
-                _current = Observable.Interval(TimeSpan.FromMilliseconds(delayMs)).ObserveOn(AvaloniaScheduler.Instance).Subscribe(_ =>
+                _current = Observable.Interval(TimeSpan.FromMilliseconds(delayMs)).Subscribe(_ =>
                 {
-                    CefRuntime.DoMessageLoopWork();
+                    Dispatcher.UIThread.Post(CefRuntime.DoMessageLoopWork);
                 });
             }
         }
